@@ -1,0 +1,76 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+  subgraph S1["1 - Sources: public datasets"]
+    direction LR
+    NSL["NSL-KDD<br/>CSV, network connections<br/><i>no time, no IP</i>"]
+    CT["AWS CloudTrail<br/>JSON, API activity<br/><i>old timestamps</i>"]
+  end
+
+  subgraph S2["2 - Data generation"]
+    direction LR
+    LG["loadgen · Go<br/>adds time and IPs, scales volume<br/><i>why: datasets lack time and size</i>"]
+    INBOX[/"inbox folder<br/>data/inbox<br/>.tmp until complete"/]
+    LG -- "A: write files" --> INBOX
+  end
+
+  subgraph S3["3 - Ingestion"]
+    ING["ingest · Go<br/>worker pool: parse, validate,<br/>transform, bulk load<br/><i>why Go: course rule, easy concurrency</i>"]
+  end
+
+  subgraph S4["4 - Storage tiers"]
+    direction LR
+    BR[("BRONZE · SeaweedFS or GCS<br/>raw files, unchanged<br/><i>why: replay and proof</i>")]
+    HOT[("HOT · OpenSearch<br/>writable index, 0-7 days<br/><i>why: full-text search in ms</i>")]
+    WARM[("WARM · OpenSearch<br/>read-only, compacted, 7-30 days<br/><i>why: still fast, cheaper</i>")]
+    COLD[("COLD · Parquet on SeaweedFS or GCS<br/>30-365 days<br/><i>why: cheapest, columnar</i>")]
+    HOT -- "E: HOT to WARM" --> WARM
+    WARM -- "F: WARM to COLD" --> COLD
+  end
+
+  subgraph S5["5 - Control plane"]
+    direction LR
+    DLM["dlm · Go<br/>planner every 30 s, job runner every 5 s<br/>seal, roll up, copy, verify, switch, purge"]
+    META[("PostgreSQL · obs_meta<br/>catalog, policies, jobs,<br/>batches, rejects, query audit<br/><i>why: transactions and locks</i>")]
+    DLM -- "reads policies, saves each step,<br/>switches catalog" --> META
+  end
+
+  subgraph S6["6 - Serving"]
+    direction LR
+    USER(["Analyst or curl"])
+    RT["router · Go<br/>REST API /api/v1/search<br/>merges results, labels tier"]
+    DUCK["DuckDB · embedded in router<br/><i>why: queries Parquet, no server</i>"]
+    USER -- "search request" --> RT
+    RT -- "H2: COLD query" --> DUCK
+  end
+
+  subgraph S7["7 - Analytics and monitoring"]
+    direction LR
+    GOLD[("PostgreSQL · obs_gold<br/>hourly totals,<br/>anomaly view")]
+    PROM["Prometheus<br/>CPU, memory, service metrics"]
+    GF["Grafana<br/>three dashboards"]
+    GF --> GOLD
+    GF --> PROM
+  end
+
+  NSL --> LG
+  CT --> LG
+  INBOX -- "picked up every 5 s" --> ING
+  ING -- "B: raw copy" --> BR
+  ING -- "C: bulk load, _id = event_id" --> HOT
+  ING -- "D: register new day; store bad rows" --> META
+  DLM -. "runs moves E and F" .-> WARM
+  RT -- "G: where is each day now?" --> META
+  RT -- "H1: HOT and WARM query" --> HOT
+  DUCK -- "reads only needed parts" --> COLD
+  DLM -- "I: hourly totals, before COLD" --> GOLD
+  GF --> META
+
+  classDef go fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef store fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef ops fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  class LG,ING,DLM,RT go
+  class BR,HOT,WARM,COLD,META,GOLD,DUCK store
+  class PROM,GF ops

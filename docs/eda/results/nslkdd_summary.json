@@ -1,0 +1,253 @@
+{
+  "train": {
+    "rows": 125973,
+    "columns": 43,
+    "missing_values": 0,
+    "exact_duplicate_rows": 0,
+    "duplicate_rows_ignoring_difficulty": 0,
+    "unmapped_labels": [],
+    "distinct_labels": 23,
+    "categories": {
+      "normal": 67343,
+      "DoS": 45927,
+      "Probe": 11656,
+      "R2L": 995,
+      "U2R": 52
+    },
+    "category_share_pct": {
+      "normal": 53.46,
+      "DoS": 36.46,
+      "Probe": 9.25,
+      "R2L": 0.79,
+      "U2R": 0.04
+    },
+    "severity": {
+      "INFO": 67343,
+      "ERROR": 45927,
+      "WARN": 11656,
+      "CRITICAL": 1047
+    },
+    "protocol_type": {
+      "tcp": 102689,
+      "udp": 14993,
+      "icmp": 8291
+    },
+    "flag": {
+      "SF": 74945,
+      "S0": 34851,
+      "REJ": 11233,
+      "RSTR": 2421,
+      "RSTO": 1562,
+      "S1": 365,
+      "SH": 271,
+      "S2": 127,
+      "RSTOS0": 103,
+      "S3": 49,
+      "OTH": 46
+    },
+    "distinct_services": 70,
+    "top_services": {
+      "http": 40338,
+      "private": 21853,
+      "domain_u": 9043,
+      "smtp": 7313,
+      "ftp_data": 6860,
+      "eco_i": 4586,
+      "other": 4359,
+      "ecr_i": 3077,
+      "telnet": 2353,
+      "finger": 1767
+    },
+    "constant_columns": [
+      "num_outbound_cmds"
+    ],
+    "difficulty": {
+      "0": 66,
+      "1": 62,
+      "2": 54,
+      "3": 65,
+      "4": 79,
+      "5": 81,
+      "6": 96,
+      "7": 118,
+      "8": 106,
+      "9": 194,
+      "10": 253,
+      "11": 641,
+      "12": 729,
+      "13": 451,
+      "14": 674,
+      "15": 3990,
+      "16": 2393,
+      "17": 3074,
+      "18": 20667,
+      "19": 10284,
+      "20": 19339,
+      "21": 62557
+    },
+    "bytes": {
+      "duration": {
+        "zero_share_pct": 92.0,
+        "median": 0.0,
+        "p99": 9590.559999999998,
+        "max": 42908,
+        "skewness": 11.9
+      },
+      "src_bytes": {
+        "zero_share_pct": 39.2,
+        "median": 44.0,
+        "p99": 54540.0,
+        "max": 1379963888,
+        "skewness": 190.7
+      },
+      "dst_bytes": {
+        "zero_share_pct": 54.0,
+        "median": 0.0,
+        "p99": 25519.0,
+        "max": 1309937401,
+        "skewness": 290.1
+      }
+    },
+    "line_bytes": {
+      "min": 141,
+      "median": 151.0,
+      "max": 166
+    }
+  },
+  "test": {
+    "rows": 22544,
+    "columns": 43,
+    "missing_values": 0,
+    "exact_duplicate_rows": 0,
+    "duplicate_rows_ignoring_difficulty": 0,
+    "unmapped_labels": [],
+    "distinct_labels": 38,
+    "categories": {
+      "normal": 9711,
+      "DoS": 7458,
+      "Probe": 2421,
+      "R2L": 2754,
+      "U2R": 200
+    },
+    "category_share_pct": {
+      "normal": 43.08,
+      "DoS": 33.08,
+      "Probe": 10.74,
+      "R2L": 12.22,
+      "U2R": 0.89
+    },
+    "severity": {
+      "INFO": 9711,
+      "ERROR": 7458,
+      "CRITICAL": 2954,
+      "WARN": 2421
+    },
+    "protocol_type": {
+      "tcp": 18880,
+      "udp": 2621,
+      "icmp": 1043
+    },
+    "flag": {
+      "SF": 14875,
+      "REJ": 3850,
+      "S0": 2013,
+      "RSTO": 773,
+      "RSTR": 669,
+      "S3": 249,
+      "SH": 73,
+      "S1": 21,
+      "S2": 15,
+      "OTH": 4,
+      "RSTOS0": 2
+    },
+    "distinct_services": 64,
+    "top_services": {
+      "http": 7853,
+      "private": 4774,
+      "telnet": 1626,
+      "pop_3": 1019,
+      "smtp": 934,
+      "domain_u": 894,
+      "ftp_data": 851,
+      "other": 838,
+      "ecr_i": 752,
+      "ftp": 692
+    },
+    "constant_columns": [
+      "num_outbound_cmds"
+    ],
+    "difficulty": {
+      "0": 123,
+      "1": 87,
+      "2": 55,
+      "3": 116,
+      "4": 101,
+      "5": 103,
+      "6": 157,
+      "7": 249,
+      "8": 131,
+      "9": 106,
+      "10": 195,
+      "11": 461,
+      "12": 486,
+      "13": 519,
+      "14": 736,
+      "15": 1176,
+      "16": 681,
+      "17": 1168,
+      "18": 2967,
+      "19": 890,
+      "20": 1343,
+      "21": 10694
+    },
+    "bytes": {
+      "duration": {
+        "zero_share_pct": 84.4,
+        "median": 0.0,
+        "p99": 7589.57,
+        "max": 57715,
+        "skewness": 15.5
+      },
+      "src_bytes": {
+        "zero_share_pct": 33.8,
+        "median": 54.0,
+        "p99": 283618.0,
+        "max": 62825648,
+        "skewness": 117.5
+      },
+      "dst_bytes": {
+        "zero_share_pct": 41.5,
+        "median": 46.0,
+        "p99": 26032.03999999998,
+        "max": 1345927,
+        "skewness": 47.5
+      }
+    },
+    "line_bytes": {
+      "min": 140,
+      "median": 152.0,
+      "max": 168
+    }
+  },
+  "test_only_labels": [
+    "apache2",
+    "httptunnel",
+    "mailbomb",
+    "mscan",
+    "named",
+    "processtable",
+    "ps",
+    "saint",
+    "sendmail",
+    "snmpgetattack",
+    "snmpguess",
+    "sqlattack",
+    "udpstorm",
+    "worm",
+    "xlock",
+    "xsnoop",
+    "xterm"
+  ],
+  "test_rows_with_test_only_labels": 3750,
+  "rows_in_both_files": 610
+}

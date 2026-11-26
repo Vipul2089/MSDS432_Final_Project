@@ -1,0 +1,179 @@
+name: obsfabric
+
+x-app: &app
+  image: obsfabric:dev
+  build:
+    context: ../..
+  init: true # tini as PID 1: forwards signals, and a crashed service exits the container so Docker restarts it
+  restart: unless-stopped
+  # Settings left empty in .env use the defaults in the code (LLD-001 §7.1).
+  environment: &app-env
+    LOG_LEVEL: ${LOG_LEVEL:-}
+    PG_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+    OS_URL: http://opensearch:9200
+    S3_ENDPOINT: http://seaweedfs:8333
+    S3_BUCKET: ${S3_BUCKET}
+    S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+    S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+  depends_on: &app-deps
+    migrate:
+      condition: service_completed_successfully
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:3.10.1
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms${OPENSEARCH_HEAP:-1536m} -Xmx${OPENSEARCH_HEAP:-1536m}
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile: { soft: 65536, hard: 65536 }
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports:
+      - "${OPENSEARCH_PORT:-9200}:9200"
+    mem_limit: ${OPENSEARCH_MEMORY:-3g}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      retries: 30
+
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    ports:
+      - "${POSTGRES_PORT:-5440}:5432"
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      retries: 20
+
+  migrate:
+    image: migrate/migrate:v4.20.1
+    command:
+      - -path=/migrations
+      - -database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      - up
+    volumes:
+      - ../../migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.55
+    command: ["mini", "-dir=/data", "-bucket=${S3_BUCKET}"]
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+    volumes:
+      - seaweedfs-data:/data
+    ports:
+      - "${SEAWEEDFS_PORT:-8333}:8333"
+    mem_limit: 1g # mini runs master, volume, filer and S3 in one process
+
+  ingest:
+    <<: *app
+    command: ["ingest"]
+    environment:
+      <<: *app-env
+      INGEST_WORKERS: ${INGEST_WORKERS:-}
+      INGEST_BULK_WORKERS: ${INGEST_BULK_WORKERS:-}
+    volumes:
+      - inbox:/data/inbox
+    ports:
+      - "${INGEST_PORT:-8081}:8080"
+    mem_limit: 512m
+    depends_on:
+      <<: *app-deps
+      opensearch:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_started
+
+  # Writes synthetic files into the inbox: make load args="-target-gb 0.1"
+  loadgen:
+    image: obsfabric:dev
+    profiles: [tools]
+    entrypoint: ["loadgen"]
+    volumes:
+      - ../../data/raw:/data/raw:ro
+      - inbox:/data/inbox
+
+  dlm:
+    <<: *app
+    command: ["dlm"]
+    environment:
+      <<: *app-env
+      DLM_PLAN_INTERVAL: ${DLM_PLAN_INTERVAL:-}
+      DLM_RUN_INTERVAL: ${DLM_RUN_INTERVAL:-}
+      DLM_DUCKDB_MEMORY: ${DLM_DUCKDB_MEMORY:-}
+      DLM_TEST_HOOK: ${DLM_TEST_HOOK:-} # set only by make test-failure-lost-cold-file
+    volumes:
+      - spool:/spool
+    ports:
+      - "${DLM_PORT:-8082}:8080"
+    mem_limit: 512m
+
+  router:
+    <<: *app
+    command: ["router"]
+    environment:
+      <<: *app-env
+      ROUTER_HOT_TIMEOUT: ${ROUTER_HOT_TIMEOUT:-}
+      ROUTER_COLD_TIMEOUT: ${ROUTER_COLD_TIMEOUT:-}
+      ROUTER_COLD_CONCURRENCY: ${ROUTER_COLD_CONCURRENCY:-}
+      ROUTER_MAX_COLD_WINDOW: ${ROUTER_MAX_COLD_WINDOW:-}
+      ROUTER_CATALOG_CACHE_TTL: ${ROUTER_CATALOG_CACHE_TTL:-}
+      ROUTER_DUCKDB_MEMORY: ${ROUTER_DUCKDB_MEMORY:-}
+    ports:
+      - "${ROUTER_PORT:-8080}:8080"
+    mem_limit: 1g
+
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    mem_limit: 512m
+
+  grafana:
+    image: grafana/grafana:13.3.2
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/system-health.json
+      GF_AUTH_ANONYMOUS_ENABLED: "true" # read-only viewing for the local demo; editing needs the admin login
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+      - postgres
+    mem_limit: 512m # Grafana 13 is OOM-killed at 256m while provisioning
+
+volumes:
+  inbox:
+  spool:
+  opensearch-data:
+  postgres-data:
+  seaweedfs-data:
+  prometheus-data:
+  grafana-data:

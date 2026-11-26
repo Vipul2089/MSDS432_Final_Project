@@ -1,0 +1,28 @@
+sequenceDiagram
+  autonumber
+  actor U as Engineer (API client)
+  participant R as router
+  participant C as Catalog (PostgreSQL)
+  participant OS as OpenSearch
+  participant D as DuckDB
+  participant S as Object store
+  participant M as dlm
+
+  U->>R: GET /api/v1/search?q=neptune&from=T1&to=T2
+  R->>C: partitions overlapping [T1, T2]
+  C-->>R: P1 HOT idx-a, P2 WARM idx-b, P3 COLD manifest-c
+  par HOT and WARM
+    R->>OS: _search idx-a,idx-b (timeout 5 s)
+    OS-->>R: hits
+  and COLD
+    R->>D: read_parquet(files of manifest-c) WHERE time and text
+    D->>S: ranged GETs (row groups skipped by statistics)
+    S-->>D: column chunks
+    D-->>R: rows (timeout 20 s)
+  end
+  Note over M,C: Meanwhile P2 is switched from WARM to COLD
+  M->>C: UPDATE tier=COLD, location=manifest-d, version+1
+  Note over R,OS: idx-b is kept for the purge grace period, so this query stays correct
+  R->>R: merge by event_time, remove duplicates by event_id
+  R->>C: INSERT query_audit (tiers, latency, status)
+  R-->>U: hits + per-tier latency + COMPLETE or PARTIAL

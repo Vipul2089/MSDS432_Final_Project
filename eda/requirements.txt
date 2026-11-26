@@ -1,0 +1,4 @@
+ipykernel>=6.29
+matplotlib>=3.9
+nbconvert>=7.16
+pandas>=2.2

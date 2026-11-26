@@ -1,0 +1,281 @@
+{
+  "raw": {
+    "records": 1939207,
+    "unparseable_event_time": 0,
+    "duplicate_event_ids": 713423,
+    "duplicate_event_ids_with_identical_content": 713423,
+    "duplicate_event_ids_across_files": 52,
+    "time": {
+      "oldest": "2017-02-12T19:57:06+00:00",
+      "newest": "2020-10-07T21:03:30+00:00",
+      "span_days": 1333,
+      "days_with_events": 1330,
+      "days_without_events": 4,
+      "events_per_active_day_median": 146.0,
+      "busiest_day": "2019-08-22",
+      "busiest_day_events": 591688,
+      "share_within_365d_of_newest_pct": 10.8,
+      "share_within_90d_of_newest_pct": 3.9
+    },
+    "event_version": {
+      "1.05": 1894509,
+      "1.04": 22510,
+      "1.02": 18165,
+      "1.06": 3179,
+      "1.07": 443,
+      "1.03": 401
+    },
+    "event_type": {
+      "AwsApiCall": 1938504,
+      "AwsServiceEvent": 603,
+      "AwsConsoleSignIn": 99,
+      "AwsConsoleAction": 1
+    },
+    "distinct_event_sources": 164,
+    "top_event_sources": {
+      "ec2.amazonaws.com": 1543250,
+      "sts.amazonaws.com": 96796,
+      "s3.amazonaws.com": 87991,
+      "iam.amazonaws.com": 65991,
+      "rds.amazonaws.com": 17827,
+      "lambda.amazonaws.com": 12265,
+      "apigateway.amazonaws.com": 8680,
+      "cloudtrail.amazonaws.com": 7993,
+      "logs.amazonaws.com": 7901,
+      "redshift.amazonaws.com": 6740
+    },
+    "distinct_event_names": 1242,
+    "top_event_names": {
+      "RunInstances": 1323105,
+      "DescribeSnapshots": 102510,
+      "AssumeRole": 79322,
+      "GetBucketAcl": 42651,
+      "DescribeInstances": 18935,
+      "GetCallerIdentity": 17128,
+      "GetPolicyVersion": 14783,
+      "ListBuckets": 13362,
+      "DescribeSpotPriceHistory": 10720,
+      "DescribeSnapshotAttribute": 9114,
+      "DescribeVpcs": 7072,
+      "ListFunctions202224": 6593,
+      "CreateDefaultVpc": 6431,
+      "ListEntitiesForPolicy": 6329,
+      "DescribeSecurityGroups": 5975
+    },
+    "error_share_pct": 77.7,
+    "top_error_codes": {
+      "Client.RequestLimitExceeded": 779330,
+      "Client.UnauthorizedOperation": 351760,
+      "AccessDenied": 120988,
+      "Client.Unsupported": 101226,
+      "Server.InsufficientInstanceCapacity": 59323,
+      "Client.InstanceLimitExceeded": 43272,
+      "NoSuchBucket": 29170,
+      "Client.InvalidParameterValue": 4200,
+      "Client.InvalidSnapshot.NotFound": 3278,
+      "Client.DryRunOperation": 2028
+    },
+    "category": {
+      "api_error": 1507714,
+      "api_ok": 431493
+    },
+    "identity_type": {
+      "IAMUser": 1825650,
+      "AWSService": 57616,
+      "AssumedRole": 42315,
+      "Root": 10997,
+      "AWSAccount": 2628,
+      "nan": 1
+    },
+    "identity_arn_missing_pct": 3.1,
+    "source_ip_kind_pct": {
+      "ipv4": 96.73,
+      "not_an_ip": 3.27,
+      "ipv6": 0.0
+    },
+    "distinct_source_ips": 9387,
+    "top_non_ip_sources": {
+      "ec2.amazonaws.com": 44158,
+      "config.amazonaws.com": 7833,
+      "lambda.amazonaws.com": 5212,
+      "apigateway.amazonaws.com": 1926,
+      "ec2-frontend-api.amazonaws.com": 1847,
+      "support.amazonaws.com": 1554,
+      "AWS Internal": 476,
+      "config-multiaccountsetup.amazonaws.com": 216,
+      "cloudtrail.amazonaws.com": 40,
+      "fms.amazonaws.com": 30
+    },
+    "distinct_regions": 17,
+    "top_regions": {
+      "us-west-2": 328933,
+      "us-east-1": 284582,
+      "ap-northeast-2": 137865,
+      "ap-northeast-1": 134880,
+      "us-west-1": 134602
+    },
+    "distinct_user_agents": 8811,
+    "record_bytes": {
+      "median": 1107.0,
+      "p95": 1939.0,
+      "p99": 1992.0,
+      "max": 30950,
+      "over_8kb": 59,
+      "over_64kb": 0
+    },
+    "files": 20,
+    "field_presence_pct": {
+      "eventID": 100.0,
+      "userIdentity": 100.0,
+      "eventType": 100.0,
+      "sourceIPAddress": 100.0,
+      "eventName": 100.0,
+      "eventSource": 100.0,
+      "recipientAccountId": 100.0,
+      "awsRegion": 100.0,
+      "eventVersion": 100.0,
+      "eventTime": 100.0,
+      "userAgent": 100.0,
+      "requestID": 100.0,
+      "requestParameters": 90.9,
+      "errorCode": 77.7,
+      "errorMessage": 77.3,
+      "responseElements": 4.7,
+      "resources": 3.5,
+      "additionalEventData": 3.3,
+      "sharedEventID": 3.1,
+      "readOnly": 2.7,
+      "apiVersion": 0.8,
+      "managementEvent": 0.2,
+      "vpcEndpointId": 0.0,
+      "serviceEventDetails": 0.0,
+      "eventCategory": 0.0
+    }
+  },
+  "deduplicated_by_event_id": {
+    "records": 1225784,
+    "unparseable_event_time": 0,
+    "duplicate_event_ids": 0,
+    "duplicate_event_ids_with_identical_content": 0,
+    "duplicate_event_ids_across_files": 0,
+    "time": {
+      "oldest": "2017-02-12T19:57:06+00:00",
+      "newest": "2020-10-07T21:03:30+00:00",
+      "span_days": 1333,
+      "days_with_events": 1330,
+      "days_without_events": 4,
+      "events_per_active_day_median": 133.5,
+      "busiest_day": "2019-08-22",
+      "busiest_day_events": 295844,
+      "share_within_365d_of_newest_pct": 17.0,
+      "share_within_90d_of_newest_pct": 6.1
+    },
+    "event_version": {
+      "1.05": 1181959,
+      "1.04": 22010,
+      "1.02": 18101,
+      "1.06": 2870,
+      "1.07": 443,
+      "1.03": 401
+    },
+    "event_type": {
+      "AwsApiCall": 1225082,
+      "AwsServiceEvent": 603,
+      "AwsConsoleSignIn": 98,
+      "AwsConsoleAction": 1
+    },
+    "distinct_event_sources": 164,
+    "top_event_sources": {
+      "ec2.amazonaws.com": 884329,
+      "sts.amazonaws.com": 85487,
+      "s3.amazonaws.com": 76117,
+      "iam.amazonaws.com": 50905,
+      "rds.amazonaws.com": 15549,
+      "lambda.amazonaws.com": 9666,
+      "apigateway.amazonaws.com": 7629,
+      "cloudtrail.amazonaws.com": 7091,
+      "logs.amazonaws.com": 6873,
+      "redshift.amazonaws.com": 5763
+    },
+    "distinct_event_names": 1242,
+    "top_event_names": {
+      "RunInstances": 708270,
+      "DescribeSnapshots": 84814,
+      "AssumeRole": 72438,
+      "GetBucketAcl": 41641,
+      "DescribeInstances": 15302,
+      "GetCallerIdentity": 12741,
+      "GetPolicyVersion": 11409,
+      "ListBuckets": 11259,
+      "DescribeSpotPriceHistory": 10196,
+      "DescribeVpcs": 5661,
+      "ListFunctions202224": 5277,
+      "DescribeLoadBalancers": 5157,
+      "ListEntitiesForPolicy": 5112,
+      "DescribeSnapshotAttribute": 4911,
+      "DescribeSecurityGroups": 4893
+    },
+    "error_share_pct": 70.8,
+    "top_error_codes": {
+      "Client.RequestLimitExceeded": 410209,
+      "Client.UnauthorizedOperation": 192651,
+      "AccessDenied": 105220,
+      "Client.Unsupported": 55496,
+      "Server.InsufficientInstanceCapacity": 33628,
+      "NoSuchBucket": 28811,
+      "Client.InstanceLimitExceeded": 25050,
+      "Client.InvalidParameterValue": 2402,
+      "Client.DryRunOperation": 1738,
+      "Client.InvalidSnapshot.NotFound": 1708
+    },
+    "category": {
+      "api_error": 867663,
+      "api_ok": 358121
+    },
+    "identity_type": {
+      "IAMUser": 1119316,
+      "AWSService": 51901,
+      "AssumedRole": 41097,
+      "Root": 10841,
+      "AWSAccount": 2628,
+      "nan": 1
+    },
+    "identity_arn_missing_pct": 4.5,
+    "source_ip_kind_pct": {
+      "ipv4": 95.29,
+      "not_an_ip": 4.71,
+      "ipv6": 0.0
+    },
+    "distinct_source_ips": 9387,
+    "top_non_ip_sources": {
+      "ec2.amazonaws.com": 40453,
+      "config.amazonaws.com": 7210,
+      "lambda.amazonaws.com": 4379,
+      "apigateway.amazonaws.com": 1886,
+      "ec2-frontend-api.amazonaws.com": 1580,
+      "support.amazonaws.com": 1472,
+      "AWS Internal": 457,
+      "config-multiaccountsetup.amazonaws.com": 210,
+      "fms.amazonaws.com": 30,
+      "cloudtrail.amazonaws.com": 20
+    },
+    "distinct_regions": 17,
+    "top_regions": {
+      "us-west-2": 256893,
+      "us-east-1": 214219,
+      "ap-northeast-2": 76002,
+      "us-west-1": 75587,
+      "ap-northeast-1": 75389
+    },
+    "distinct_user_agents": 8811,
+    "record_bytes": {
+      "median": 1104.0,
+      "p95": 1935.0,
+      "p99": 1991.0,
+      "max": 30950,
+      "over_8kb": 56,
+      "over_64kb": 0
+    },
+    "files": 20
+  }
+}

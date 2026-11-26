@@ -1,0 +1,39 @@
+{
+  "index_patterns": ["logs-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "refresh_interval": "5s",
+      "analysis": {
+        "analyzer": {
+          "raw_words": { "type": "pattern", "pattern": "\\W+", "lowercase": true }
+        }
+      }
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "event_id":        { "type": "keyword" },
+        "event_time":      { "type": "date" },
+        "observed_time":   { "type": "date" },
+        "partition_id":    { "type": "long" },
+        "source":          { "type": "keyword" },
+        "event_type":      { "type": "keyword" },
+        "category":        { "type": "keyword" },
+        "severity":        { "type": "keyword" },
+        "src_ip":          { "type": "ip" },
+        "dst_ip":          { "type": "ip" },
+        "protocol":        { "type": "keyword" },
+        "service":         { "type": "keyword" },
+        "bytes":           { "type": "long" },
+        "duration_s":      { "type": "float" },
+        "label":           { "type": "keyword" },
+        "raw_message":     { "type": "text", "analyzer": "raw_words" },
+        "is_synthetic":    { "type": "boolean" },
+        "ingest_batch_id": { "type": "long" },
+        "schema_version":  { "type": "keyword" }
+      }
+    }
+  }
+}

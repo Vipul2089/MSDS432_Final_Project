@@ -1,0 +1,52 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+  subgraph SRC["1 - Sources"]
+    direction LR
+    NSL["NSL-KDD CSV"]
+    CT["CloudTrail JSON"]
+    LG["loadgen (Go)<br/>backdated or shifted timestamps"]
+    NSL --> LG
+    CT --> LG
+  end
+
+  ING["2 - ingest (Go)<br/>read - parse - validate - transform - bulk load"]
+
+  subgraph STORE["3 - Storage tiers"]
+    direction LR
+    BR[("BRONZE<br/>raw files")]
+    HOT[("HOT<br/>OpenSearch<br/>writable")]
+    WARM[("WARM<br/>OpenSearch<br/>read-only")]
+    COLD[("COLD<br/>Parquet + manifest<br/>SeaweedFS / GCS")]
+    HOT -. "seal, force-merge" .-> WARM
+    WARM -. "export, verify, switch" .-> COLD
+  end
+
+  subgraph CTRL["4 - Control plane"]
+    direction LR
+    DLM["dlm (Go)<br/>planner + job runner + hourly rollup"]
+    CAT[("obs_meta<br/>catalog, policies, jobs")]
+    PROM["Prometheus<br/>scrapes every service"]
+  end
+
+  subgraph SERVE["5 - Serving"]
+    direction LR
+    API["curl / API client"] --> QR["router (Go)<br/>OpenSearch + DuckDB"]
+    GOLD[("obs_gold<br/>hourly rollup, anomaly view")]
+    GF["Grafana dashboards"]
+  end
+
+  LG -- "files in inbox" --> ING
+  ING --> BR
+  ING -- "_id = event_id" --> HOT
+  ING -- "register partition" --> CAT
+  DLM -- "seal, jobs, catalog switch" --> CAT
+  DLM -. "moves data" .-> STORE
+  QR -- "1 plan by time range" --> CAT
+  QR -- "2 query by tier" --> STORE
+  DLM -- "hourly rollup" --> GOLD
+  GF --> GOLD
+  GF --> CAT
+  GF --> PROM

@@ -1,0 +1,716 @@
+{
+  "uid": "obs-storage-search",
+  "title": "Observability Fabric: storage and search",
+  "description": "Data and cost per tier, savings against keeping everything in HOT, and search time by tier.",
+  "tags": [
+    "obsfabric"
+  ],
+  "timezone": "utc",
+  "refresh": "1m",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "schemaVersion": 39,
+  "editable": false,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Storage and cost",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Estimated monthly cost",
+      "description": "Data in each tier times the tier's price per GB-month (tier_prices).",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT coalesce((SELECT sum(s.gb * t.usd_per_gb_month) FROM (SELECT p.tier, coalesce(p.size_bytes, 0) / 1e9 AS gb FROM data_partitions p WHERE p.state <> 'DELETED') s JOIN tier_prices t USING (tier)), 0) AS usd",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 16,
+          "valueSize": 30
+        }
+      },
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "All-HOT cost",
+      "description": "The same data priced at the HOT rate. Conservative: COLD data is counted at its compressed Parquet size.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT coalesce((SELECT sum(s.gb) * (SELECT usd_per_gb_month FROM tier_prices WHERE tier = 'HOT') FROM (SELECT p.tier, coalesce(p.size_bytes, 0) / 1e9 AS gb FROM data_partitions p WHERE p.state <> 'DELETED') s), 0) AS usd",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 16,
+          "valueSize": 30
+        }
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Savings",
+      "description": "Difference between keeping everything in HOT and the tiered layout.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT coalesce((SELECT sum(s.gb) * (SELECT usd_per_gb_month FROM tier_prices WHERE tier = 'HOT') FROM (SELECT p.tier, coalesce(p.size_bytes, 0) / 1e9 AS gb FROM data_partitions p WHERE p.state <> 'DELETED') s), 0) - coalesce((SELECT sum(s.gb * t.usd_per_gb_month) FROM (SELECT p.tier, coalesce(p.size_bytes, 0) / 1e9 AS gb FROM data_partitions p WHERE p.state <> 'DELETED') s JOIN tier_prices t USING (tier)), 0) AS usd",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 16,
+          "valueSize": 30
+        }
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Savings rate",
+      "description": "Savings as a share of the all-HOT cost.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT 100 * (1 - coalesce((SELECT sum(s.gb * t.usd_per_gb_month) FROM (SELECT p.tier, coalesce(p.size_bytes, 0) / 1e9 AS gb FROM data_partitions p WHERE p.state <> 'DELETED') s JOIN tier_prices t USING (tier)), 0) / nullif((SELECT sum(s.gb) * (SELECT usd_per_gb_month FROM tier_prices WHERE tier = 'HOT') FROM (SELECT p.tier, coalesce(p.size_bytes, 0) / 1e9 AS gb FROM data_partitions p WHERE p.state <> 'DELETED') s), 0)) AS pct",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 16,
+          "valueSize": 30
+        }
+      },
+      "id": 5
+    },
+    {
+      "type": "table",
+      "title": "By tier",
+      "description": "Partitions, size and estimated monthly cost per tier, with the price used.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT t.tier, count(p.partition_id) AS \"partitions\", coalesce(sum(p.doc_count), 0) AS \"events\", coalesce(sum(p.size_bytes), 0) AS \"size\", coalesce(sum(p.size_bytes), 0) / 1e9 * t.usd_per_gb_month AS \"USD per month\", t.usd_per_gb_month AS \"USD per GB-month\", t.product AS \"priced as\" FROM tier_prices t LEFT JOIN data_partitions p ON p.tier = t.tier AND p.state <> 'DELETED' GROUP BY t.tier, t.usd_per_gb_month, t.product ORDER BY array_position(ARRAY['HOT', 'WARM', 'COLD'], t.tier::text)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "USD per month"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          }
+        ]
+      },
+      "options": {},
+      "id": 6
+    },
+    {
+      "type": "bargauge",
+      "title": "Size by tier",
+      "description": "Bytes stored in each tier. HOT and WARM are index sizes; COLD is Parquet.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT t.tier, coalesce(sum(p.size_bytes), 0) AS bytes FROM tier_prices t LEFT JOIN data_partitions p ON p.tier = t.tier AND p.state <> 'DELETED' GROUP BY t.tier ORDER BY array_position(ARRAY['HOT', 'WARM', 'COLD'], t.tier::text)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "number"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "reduceOptions": {
+          "values": true,
+          "calcs": [],
+          "fields": ""
+        }
+      },
+      "id": 7
+    },
+    {
+      "type": "table",
+      "title": "Partitions",
+      "description": "Every partition in the catalog, newest first.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 10,
+        "w": 16,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT to_char(bucket_start AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI') AS \"bucket (UTC)\", tier, state, doc_count AS \"events\", size_bytes AS \"size\", location FROM data_partitions ORDER BY bucket_start DESC",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tier"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "HOT": {
+                        "color": "red"
+                      },
+                      "WARM": {
+                        "color": "orange"
+                      },
+                      "COLD": {
+                        "color": "blue"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {},
+      "id": 8
+    },
+    {
+      "type": "row",
+      "title": "Search performance",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 9
+    },
+    {
+      "type": "timeseries",
+      "title": "Search time by tier (95th percentile)",
+      "description": "95th percentile time per tier per minute, from query_audit.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT $__timeGroupAlias(q.requested_at, '1m', NULL), d.key AS metric, percentile_cont(0.95) WITHIN GROUP (ORDER BY d.value::numeric) AS value FROM query_audit q, jsonb_each_text(q.tier_durations) d WHERE $__timeFilter(q.requested_at) GROUP BY 1, 2 ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "HOT"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "WARM"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "COLD"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 10
+    },
+    {
+      "type": "table",
+      "title": "Search time by tier",
+      "description": "Median (p50) and 95th-percentile (p95) search time per tier over the selected time range.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 7,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT d.key AS tier, count(*) AS \"searches\", percentile_cont(0.5) WITHIN GROUP (ORDER BY d.value::numeric) AS \"p50\", percentile_cont(0.95) WITHIN GROUP (ORDER BY d.value::numeric) AS \"p95\" FROM query_audit q, jsonb_each_text(q.tier_durations) d WHERE $__timeFilter(q.requested_at) GROUP BY 1 ORDER BY array_position(ARRAY['HOT', 'WARM', 'COLD'], d.key)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "p50|p95"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {},
+      "id": 11
+    },
+    {
+      "type": "piechart",
+      "title": "Search results",
+      "description": "COMPLETE, PARTIAL (a tier failed or timed out) and FAILED searches in the selected range.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 19,
+        "y": 20,
+        "w": 5,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT status, count(*) AS searches FROM query_audit WHERE $__timeFilter(requested_at) GROUP BY status",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "COMPLETE"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PARTIAL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "FAILED"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "values": true,
+          "calcs": [],
+          "fields": ""
+        },
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "pieType": "donut",
+        "displayLabels": [
+          "value"
+        ]
+      },
+      "id": 12
+    }
+  ]
+}

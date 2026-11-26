@@ -1,0 +1,15 @@
+flowchart LR
+  F["inbox file"] --> H["pass 1: SHA-256<br/>origin_id"]
+  H --> T["pass 2: io.TeeReader"]
+  T -- "raw bytes" --> UP[("Bronze<br/>object store")]
+  T --> SC["scanner<br/>max record size"]
+  SC -- "chan record<br/>capacity 10,000" --> WP["worker pool, N = GOMAXPROCS<br/>map - validate<br/>event_id + bucket"]
+  WP -- "rule failed" --> DL[("rejected_records")]
+  WP -- "chan event<br/>capacity 10,000" --> PR["partition resolver<br/>new bucket: catalog row, then index<br/>not OPEN: LATE_EVENT"]
+  PR -- "LATE_EVENT" --> DL
+  PR -- "first event of bucket" --> CAT[("catalog<br/>tier=HOT, state=OPEN")]
+  PR --> BW["bulk writers, M = 2<br/>op_type=create<br/>flush at 5 MB or 1 s"]
+  BW -- "_bulk" --> OS[("OpenSearch HOT")]
+  OS -- "429: backoff + jitter" --> BW
+  OS -- "400: MAPPING_ERROR" --> DL
+  BW -- "201 loaded, 409 duplicate" --> ST[("ingest_batches")]

@@ -1,0 +1,12 @@
+# markdownlint-cli2 configuration. Rules: https://github.com/DavidAnson/markdownlint
+config:
+  default: true
+  # Tables and URLs make a hard line-length limit impractical.
+  MD013: false
+  # Allow repeated headings in different sections, such as "Positive" in each ADR.
+  MD024:
+    siblings_only: true
+ignores:
+  - "node_modules/**"
+  - "**/.venv/**"
+  - "data/**"

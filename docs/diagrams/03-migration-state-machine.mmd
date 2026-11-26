@@ -1,0 +1,25 @@
+stateDiagram-v2
+  direction LR
+  [*] --> PENDING: planner creates job for a SEALED partition
+  PENDING --> COPYING: runner picks job, attempt + 1
+  COPYING --> VERIFYING: copy done, manifest written last
+  VERIFYING --> SWITCHING: count and fingerprint match
+  SWITCHING --> PURGE_PENDING: catalog switched in one transaction
+  PURGE_PENDING --> DONE: grace period over, old copy deleted
+  COPYING --> ROLLING_BACK: error
+  VERIFYING --> ROLLING_BACK: mismatch
+  ROLLING_BACK --> PENDING: attempts left, backoff
+  ROLLING_BACK --> FAILED: no attempts left, alert
+  DONE --> [*]
+  FAILED --> [*]
+
+  note right of COPYING
+    Catalog still points at the source.
+    Searches are unaffected.
+    After a crash, the restarted dlm
+    resumes from the saved status.
+  end note
+  note right of PURGE_PENDING
+    Grace period is longer than the query timeout,
+    so running queries on the old copy finish safely.
+  end note

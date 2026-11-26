@@ -1,0 +1,550 @@
+{
+  "uid": "obs-security-events",
+  "title": "Observability Fabric: security events",
+  "description": "Events by source and category, error counts and anomaly-flagged hours, from the hourly rollup.",
+  "tags": [
+    "obsfabric"
+  ],
+  "timezone": "utc",
+  "refresh": "1m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "schemaVersion": 39,
+  "editable": false,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Security events and anomalies",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Events",
+      "description": "Events in the selected range, from the hourly rollup.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT coalesce(sum(event_count), 0) AS events FROM obs_gold.fact_events_hourly WHERE $__timeFilter(hour_start)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 16,
+          "valueSize": 30
+        }
+      },
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Error events",
+      "description": "Events with severity ERROR or CRITICAL in the selected range.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT coalesce(sum(error_count), 0) AS errors FROM obs_gold.fact_events_hourly WHERE $__timeFilter(hour_start)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 16,
+          "valueSize": 30
+        }
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Error share",
+      "description": "Error events as a share of all events in the selected range.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT 100.0 * sum(error_count) / nullif(sum(event_count), 0) AS pct FROM obs_gold.fact_events_hourly WHERE $__timeFilter(hour_start)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 16,
+          "valueSize": 30
+        }
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Anomalous hours",
+      "description": "Hours whose count is at least 3 standard deviations from the previous 24 hours of the same source and category.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT count(*) AS hours FROM obs_gold.events_hourly_scored WHERE is_anomaly AND $__timeFilter(hour_start)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 16,
+          "valueSize": 30
+        }
+      },
+      "id": 5
+    },
+    {
+      "type": "timeseries",
+      "title": "Events per hour by category",
+      "description": "Hourly events by category, all sources.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT hour_start AS time, category AS metric, sum(event_count) AS value FROM obs_gold.fact_events_hourly WHERE $__timeFilter(hour_start) GROUP BY 1, 2 ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal"
+            },
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "normal"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Probe"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DoS"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "R2L"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "U2R"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "dark-red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "api_ok"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "api_error"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 6
+    },
+    {
+      "type": "timeseries",
+      "title": "Error events per hour by source",
+      "description": "Hourly ERROR and CRITICAL events by source.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT hour_start AS time, source AS metric, sum(error_count) AS value FROM obs_gold.fact_events_hourly WHERE $__timeFilter(hour_start) GROUP BY 1, 2 ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal"
+            },
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 7
+    },
+    {
+      "type": "table",
+      "title": "By source and category",
+      "description": "Totals for the selected range.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 10,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT source, category, sum(event_count) AS \"events\", sum(error_count) AS \"errors\", round(100.0 * sum(error_count) / nullif(sum(event_count), 0), 1) AS \"error %\", sum(bytes_total) AS \"bytes\" FROM obs_gold.fact_events_hourly WHERE $__timeFilter(hour_start) GROUP BY 1, 2 ORDER BY 3 DESC",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bytes"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {},
+      "id": 8
+    },
+    {
+      "type": "table",
+      "title": "Anomalous hours",
+      "description": "Flagged hours, newest first. The score is null until a source and category has 12 earlier hours.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "catalog"
+      },
+      "gridPos": {
+        "x": 10,
+        "y": 14,
+        "w": 14,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "catalog"
+          },
+          "rawSql": "SELECT to_char(hour_start AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI') AS \"hour (UTC)\", source, category, event_count AS \"events\", baseline AS \"baseline (24 h avg)\", anomaly_score AS \"score\" FROM obs_gold.events_hourly_scored WHERE is_anomaly AND $__timeFilter(hour_start) ORDER BY hour_start DESC LIMIT 50",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {},
+      "id": 9
+    }
+  ]
+}
